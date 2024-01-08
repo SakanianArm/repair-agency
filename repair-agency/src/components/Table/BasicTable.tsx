@@ -1,122 +1,86 @@
-import { Table } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Table, Button } from 'antd';
+import axios from 'axios';
 
-interface DataType {
+interface Post {
   id: number;
-  quantity: number;
-  date: string;
-  status: string;
-  product: number;
-  user: number;
+  title: string;
+  text: string;
+  category: number;
+  author: number;
 }
 
 const BasicTable: React.FC = () => {
-  const tableData:DataType[] = [
-    {
-      id: 1,
-      quantity: 2,
-      date: '2023-06-27',
-      status: "SHIPPED",
-      product: 1,
-      user: 2,
-    },
-    {
-      id: 2,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "PROCESSING",
-      product: 2,
-      user: 2,
-    },
-    {
-      id: 3,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "DELIVERED",
-      product: 3,
-      user: 7,
-    },
-    {
-      id: 4,
-      quantity: 2,
-      date: '2023-06-27',
-      status: "SHIPPED",
-      product: 1,
-      user: 2,
-    },
-    {
-      id: 5,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "PROCESSING",
-      product: 2,
-      user: 2,
-    },
-    {
-      id: 6,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "DELIVERED",
-      product: 3,
-      user: 7,
-    },
-    {
-      id: 7,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "PROCESSING",
-      product: 2,
-      user: 2,
-    },
-    {
-      id: 8,
-      quantity: 1,
-      date: '2023-06-27',
-      status: "DELIVERED",
-      product: 3,
-      user: 7,
-    },
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const pageSize = 10; 
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/posts/?page=${currentPage}&page_size=${pageSize}`);
+        setPosts(response.data.results);
+        setTotalPages(Math.ceil(response.data.count / pageSize));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
 
-  ];
+    fetchData();
+  }, [currentPage]);
 
-  const columns: ColumnsType<DataType> = [
+  const handlePrevPage = () => {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
+  };
+
+  const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      render: (id: string) => <a>{id}</a>,
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
     },
     {
-      title: "Количество",
-      dataIndex: "quantity",
-      key: "quantity",
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
     },
     {
-      title: "Дата",
-      dataIndex: "date",
-      key: "date",
+      title: 'Text',
+      dataIndex: 'text',
+      key: 'text',
     },
     {
-      title: "Статус",
-      key: "status",
-      dataIndex: "status",
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
     },
     {
-      title: "ID Товара",
-      key: "product",
-      dataIndex: "product",
-    },
-    {
-      title: "ID Пользователя",
-      key: "user",
-      dataIndex: "user",
+      title: 'Author',
+      dataIndex: 'author',
+      key: 'author',
     },
   ];
 
   return (
-    <Table columns={columns} dataSource={tableData} />
+    <div>
+      <Table dataSource={posts} columns={columns} pagination={false} rowKey="id" bordered />
+      <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <Button onClick={handlePrevPage} disabled={currentPage === 1}>
+          Previous Page
+        </Button>
+        <span style={{ margin: '0 8px' }}>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages}>
+          Next Page
+        </Button>
+      </div>
+    </div>
   );
 };
 
